@@ -309,7 +309,7 @@ interface ContentObject {
 
 const validExtensions = new Set(['.jsx', '.tsx']);
 const projectRoot = findProjectRoot();
-const tailwindInputFile = path.resolve(projectRoot, './tailwind.config.ts');
+const tailwindInputFile = path.resolve(projectRoot, './tailwind.config.js');
 const tailwindJsonOutfile = path.resolve(projectRoot, './src/tailwind.config.lov.json');
 const tailwindIntermediateFile = path.resolve(projectRoot, './.lov.tailwind.config.js');
 const isSandbox = process.env.LOVABLE_DEV_SERVER === 'true';
@@ -350,7 +350,7 @@ export function componentTagger(): Plugin {
             if (node.type === 'JSXElement') {
               currentElement = node;
             }
-
+            
             if (node.type === 'JSXOpeningElement') {
               const jsxNode = node;
               let elementName: string;
@@ -449,6 +449,7 @@ export function componentTagger(): Plugin {
       if (!isSandbox) return;
       
       try {
+        console.log("inside build start before generate config")
         await generateConfig();
       } catch (error) {
         console.error('Error generating tailwind.config.lov.json:', error);
@@ -459,6 +460,7 @@ export function componentTagger(): Plugin {
       if (!isSandbox) return;
       
       try {
+
         server.watcher.add(tailwindInputFile);
         server.watcher.on('change', async (changedPath) => {
           if (path.normalize(changedPath) === path.normalize(tailwindInputFile)) {
@@ -473,6 +475,7 @@ export function componentTagger(): Plugin {
 }
 
 export async function generateConfig(): Promise<void> {
+  console.log("inside generate config")
   try {
     await esbuild.build({
       entryPoints: [tailwindInputFile],
