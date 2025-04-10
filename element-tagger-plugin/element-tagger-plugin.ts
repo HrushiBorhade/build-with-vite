@@ -1,5 +1,11 @@
 import path from 'path';
 import { existsSync } from 'fs';
+import { parse } from '@babel/parser';
+import * as esbuild from 'esbuild';
+import fs from 'fs/promises';
+import MagicString from 'magic-string';
+import resolveConfig from 'tailwindcss/resolveConfig.js';
+import { Plugin } from 'vite';
 
 export function findProjectRoot(startPath = process.cwd()): string {
   try {
@@ -288,14 +294,6 @@ export function shouldTagElement(elementName: string): boolean {
   return !threeFiberElems.includes(elementName) && !dreiElems.includes(elementName);
 }
 
-// src/componentTaggerPlugin.ts
-import { parse } from '@babel/parser';
-import * as esbuild from 'esbuild';
-import fs from 'fs/promises';
-import MagicString from 'magic-string';
-import path2 from 'path';
-import resolveConfig from 'tailwindcss/resolveConfig.js';
-import { Plugin } from 'vite';
 
 interface Stats {
   totalFiles: number;
@@ -311,9 +309,9 @@ interface ContentObject {
 
 const validExtensions = new Set(['.jsx', '.tsx']);
 const projectRoot = findProjectRoot();
-const tailwindInputFile = path2.resolve(projectRoot, './tailwind.config.ts');
-const tailwindJsonOutfile = path2.resolve(projectRoot, './src/tailwind.config.lov.json');
-const tailwindIntermediateFile = path2.resolve(projectRoot, './.lov.tailwind.config.js');
+const tailwindInputFile = path.resolve(projectRoot, './tailwind.config.ts');
+const tailwindJsonOutfile = path.resolve(projectRoot, './src/tailwind.config.lov.json');
+const tailwindIntermediateFile = path.resolve(projectRoot, './.lov.tailwind.config.js');
 const isSandbox = process.env.LOVABLE_DEV_SERVER === 'true';
 
 export function componentTagger(): Plugin {
@@ -328,12 +326,12 @@ export function componentTagger(): Plugin {
     name: 'vite-plugin-component-tagger',
     enforce: 'pre',
     async transform(code: string, id: string) {
-      if (!validExtensions.has(path2.extname(id)) || id.includes('node_modules')) {
+      if (!validExtensions.has(path.extname(id)) || id.includes('node_modules')) {
         return null;
       }
 
       stats.totalFiles++;
-      const relativePath = path2.relative(cwd, id);
+      const relativePath = path.relative(cwd, id);
 
       try {
         const parserOptions = {
@@ -414,7 +412,7 @@ export function componentTagger(): Plugin {
               const line = jsxNode.loc?.start?.line ?? 0;
               const col = jsxNode.loc?.start?.column ?? 0;
               const dataComponentId = `${relativePath}:${line}:${col}`;
-              const fileName = path2.basename(id);
+              const fileName = path.basename(id);
               
               const shouldTag = shouldTagElement(elementName);
               if (shouldTag) {
@@ -463,7 +461,7 @@ export function componentTagger(): Plugin {
       try {
         server.watcher.add(tailwindInputFile);
         server.watcher.on('change', async (changedPath) => {
-          if (path2.normalize(changedPath) === path2.normalize(tailwindInputFile)) {
+          if (path.normalize(changedPath) === path.normalize(tailwindInputFile)) {
             await generateConfig();
           }
         });
@@ -474,7 +472,7 @@ export function componentTagger(): Plugin {
   };
 }
 
-async function generateConfig(): Promise<void> {
+export async function generateConfig(): Promise<void> {
   try {
     await esbuild.build({
       entryPoints: [tailwindInputFile],
@@ -511,4 +509,4 @@ async function generateConfig(): Promise<void> {
     console.error('Error in generateConfig:', error);
     throw error;
   }
-}
+} 

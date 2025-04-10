@@ -9,7 +9,7 @@ export default defineConfig({
   plugins: [react(), componentTagger(), Inspect()],
   resolve: {
     alias: {
-      "@/": path.resolve(__dirname, "./src"),
+      "@": path.resolve(__dirname, "./src"),
     },
   },
 });
